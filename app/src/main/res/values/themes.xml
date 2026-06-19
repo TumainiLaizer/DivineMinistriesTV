@@ -1,4 +1,10 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.DivineMinistriesTV" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="android:statusBarColor">?attr/colorPrimary</item>
+    </style>
 
-    <style name="Theme.DivineMinistriesTV" parent="Theme.MaterialComponents.Light" />
+    <style name="Theme.DivineMinistries" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/purple_500</item>
+    </style>
 </resources>
