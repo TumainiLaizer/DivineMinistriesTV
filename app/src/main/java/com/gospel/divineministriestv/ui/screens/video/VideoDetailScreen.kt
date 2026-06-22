@@ -232,20 +232,56 @@ fun VideoDetailScreen(
                                             color = Color.White.copy(alpha = 0.8f),
                                             lineHeight = 22.sp
                                         )
-                                        Spacer(modifier = Modifier.height(16.dp))
-                                        Text(
-                                            text = "Key Topics:",
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            TopicChip("Faith")
-                                            TopicChip("Prophecy")
-                                            TopicChip("Promises")
+                                        
+                                        val hashtags = video.description.split(" ", "\n")
+                                            .filter { it.startsWith("#") && it.length > 1 }
+                                            .distinct()
+
+                                        if (hashtags.isNotEmpty()) {
+                                            Spacer(modifier = Modifier.height(16.dp))
+                                            Text(
+                                                text = "Key Topics:",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            FlowRow(
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                hashtags.forEach { tag ->
+                                                    TopicChip(tag.removePrefix("#"))
+                                                }
+                                            }
                                         }
                                         Spacer(modifier = Modifier.height(24.dp))
+                                    }
+                                }
+                                1, 2 -> {
+                                    val keyword = if (selectedTab == 1) "Scripture" else "Prayer"
+                                    val lines = video.description.split("\n")
+                                        .filter { it.contains(keyword, ignoreCase = true) || it.contains("Verse", ignoreCase = true) }
+                                    
+                                    if (lines.isNotEmpty()) {
+                                        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                                            lines.forEach { line ->
+                                                Text(
+                                                    text = "• $line",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = Color.White,
+                                                    modifier = Modifier.padding(vertical = 4.dp)
+                                                )
+                                            }
+                                        }
+                                    } else {
+                                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                            Text(
+                                                text = "No specific ${tabs[selectedTab].lowercase()} extracted from description",
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                            )
+                                        }
                                     }
                                 }
                                 3 -> {

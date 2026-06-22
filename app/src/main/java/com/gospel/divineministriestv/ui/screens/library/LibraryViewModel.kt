@@ -55,7 +55,10 @@ class LibraryViewModel @Inject constructor(
             LibraryFilter.ALL -> allVideos
             LibraryFilter.YEAR -> allVideos.sortedByDescending { it.publishedAt }
             LibraryFilter.PROGRAM -> allVideos.sortedBy { it.title }
-            LibraryFilter.TOPICS -> allVideos.sortedBy { it.description.length } // Placeholder for topics sorting
+            LibraryFilter.TOPICS -> allVideos.sortedBy { video ->
+                // Sort by videos that have more hashtags/topics in description
+                video.description.count { it == '#' }
+            }.reversed()
         }
         _uiState.value = LibraryUiState.Success(filteredVideos)
     }

@@ -23,8 +23,9 @@ fun YouTubePlayer(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     
-    val youtubePlayerView = remember {
+    val youtubePlayerView = remember(videoId) {
         YouTubePlayerView(context).apply {
+            enableAutomaticInitialization = false
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -34,7 +35,7 @@ fun YouTubePlayer(
                 override fun onReady(youTubePlayer: YouTubePlayer) {
                     youTubePlayer.loadVideo(videoId, 0f)
                 }
-            }, true) // true for handleNetworkOffline
+            }, true)
         }
     }
 
