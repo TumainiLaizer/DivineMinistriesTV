@@ -1,9 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.jetbrains.kotlin.plugin.serialization)
     alias(libs.plugins.dagger.hilt.android)
+}
+
+// Load local.properties
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
 }
 
 android {
@@ -18,7 +27,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "YOUTUBE_API_KEY", "\"AIzaSyBOa62FGUt5t4AfIsgqUNCJ7HVfc1c0VHE\"")
+        
+        // Load API key from local.properties
+        val apiKey = localProperties.getProperty("YOUTUBE_API_KEY") ?: ""
+        buildConfigField("String", "YOUTUBE_API_KEY", "\"$apiKey\"")
     }
 
     buildTypes {
