@@ -1,24 +1,35 @@
 package com.gospel.divineministriestv.data.repository
 
+import com.gospel.divineministriestv.data.local.VideoDao
+import com.gospel.divineministriestv.data.model.ChannelStats
+import com.gospel.divineministriestv.data.model.Comment
 import com.gospel.divineministriestv.data.model.Playlist
 import com.gospel.divineministriestv.data.model.Video
 import com.gospel.divineministriestv.data.remote.YouTubeApiService
 import com.gospel.divineministriestv.util.Constants
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class YouTubeRepository @Inject constructor(
     private val apiService: YouTubeApiService,
+    private val videoDao: VideoDao
 ) {
     private val apiKey = com.gospel.divineministriestv.BuildConfig.YOUTUBE_API_KEY
 
     suspend fun getLatestVideos(): List<Video> {
+        return searchVideos(null)
+    }
+
+    suspend fun searchVideos(query: String?): List<Video> {
         val response = apiService.searchVideos(
             channelId = Constants.YOUTUBE_CHANNEL_ID,
+            query = query,
             apiKey = apiKey
         )
         val videoIds = response.items.joinToString(",") { it.id.videoId }
+        if (videoIds.isEmpty()) return emptyList()
         return getVideoDetails(videoIds)
     }
 
@@ -35,7 +46,9 @@ class YouTubeRepository @Inject constructor(
                 thumbnailUrl = item.snippet.thumbnails.high.url,
                 publishedAt = item.snippet.publishedAt,
                 duration = parseDuration(item.contentDetails.duration),
-                viewCount = formatViewCount(item.statistics.viewCount)
+                viewCount = formatCount(item.statistics.viewCount),
+                likeCount = formatCount(item.statistics.likeCount),
+                commentCount = formatCount(item.statistics.commentCount)
             )
         }
     }
@@ -72,7 +85,40 @@ class YouTubeRepository @Inject constructor(
             apiKey = apiKey
         )
         val videoIds = response.items.joinToString(",") { it.snippet.resourceId?.videoId ?: "" }
+        if (videoIds.replace(",", "").isEmpty()) return emptyList()
         return getVideoDetails(videoIds)
+    }
+
+    suspend fun getChannelStats(): ChannelStats? {
+        val response = apiService.getChannelDetails(
+            channelId = Constants.YOUTUBE_CHANNEL_ID,
+            apiKey = apiKey
+        )
+        val item = response.items.firstOrNull() ?: return null
+        return ChannelStats(
+            id = item.id,
+            subscriberCount = formatCount(item.statistics.subscriberCount),
+            viewCount = formatCount(item.statistics.viewCount),
+            videoCount = formatCount(item.statistics.videoCount),
+            bannerUrl = item.brandingSettings.image?.bannerExternalUrl
+        )
+    }
+
+    suspend fun getVideoComments(videoId: String): List<Comment> {
+        val response = apiService.getComments(
+            videoId = videoId,
+            apiKey = apiKey
+        )
+        return response.items.map { item ->
+            val snippet = item.snippet.topLevelComment.snippet
+            Comment(
+                authorName = snippet.authorDisplayName,
+                authorImageUrl = snippet.authorProfileImageUrl,
+                text = snippet.textDisplay,
+                likeCount = snippet.likeCount,
+                publishedAt = snippet.publishedAt
+            )
+        }
     }
 
     private fun parseDuration(duration: String): String {
@@ -90,12 +136,26 @@ class YouTubeRepository @Inject constructor(
             }
     }
 
-    private fun formatViewCount(count: String): String {
-        val views = count.toLongOrNull() ?: return count
+    private fun formatCount(count: String?): String {
+        if (count == null) return "0"
+        val value = count.toLongOrNull() ?: return count
         return when {
-            views >= 1_000_000 -> "${views / 1_000_000}M"
-            views >= 1_000 -> "${views / 1_000}K"
+            value >= 1_000_000 -> "${value / 1_000_000}M"
+            value >= 1_000 -> "${value / 1_000}K"
             else -> count
+        }
+    }
+
+    // Favorites Logic
+    fun getFavoriteVideos(): Flow<List<Video>> = videoDao.getAllFavorites()
+    
+    fun isFavorite(videoId: String): Flow<Boolean> = videoDao.isFavorite(videoId)
+
+    suspend fun toggleFavorite(video: Video, isCurrentlyFavorite: Boolean) {
+        if (isCurrentlyFavorite) {
+            videoDao.deleteFavorite(video)
+        } else {
+            videoDao.insertFavorite(video)
         }
     }
 }

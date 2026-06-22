@@ -1,12 +1,17 @@
 package com.gospel.divineministriestv.ui.screens.video
 
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -16,10 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.gospel.divineministriestv.data.model.Comment
 import com.gospel.divineministriestv.ui.components.YouTubePlayer
 import com.gospel.divineministriestv.ui.theme.DivineMinistriesTVTheme
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,13 +41,14 @@ fun VideoDetailScreen(
     viewModel: VideoDetailViewModel? = null
 ) {
     val uiState by (viewModel?.uiState ?: MutableStateFlow(VideoDetailUiState.Loading)).collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(videoId) {
         viewModel?.fetchVideoDetails(videoId)
     }
 
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Summary", "Scriptures", "Prayer Points", "Notes")
+    val tabs = listOf("Summary", "Scriptures", "Prayer Points", "Comments")
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -75,7 +85,6 @@ fun VideoDetailScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
-                        .verticalScroll(rememberScrollState())
                 ) {
                     YouTubePlayer(
                         videoId = videoId,
@@ -91,10 +100,54 @@ fun VideoDetailScreen(
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
+                        Row(
+                            modifier = Modifier.padding(top = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Visibility, 
+                                contentDescription = null, 
+                                tint = MaterialTheme.colorScheme.secondary, 
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = " ${video.viewCount ?: "0"} views",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Icon(
+                                imageVector = Icons.Default.ThumbUp, 
+                                contentDescription = null, 
+                                tint = MaterialTheme.colorScheme.secondary, 
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = " ${video.likeCount ?: "0"}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Comment, 
+                                contentDescription = null, 
+                                tint = MaterialTheme.colorScheme.secondary, 
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = " ${video.commentCount ?: "0"}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                         Text(
-                            text = "${video.publishedAt} • ${video.duration ?: ""} • ${video.viewCount ?: ""} views",
+                            text = video.publishedAt.take(10),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.White.copy(alpha = 0.5f),
+                            modifier = Modifier.padding(top = 4.dp)
                         )
 
                         Spacer(modifier = Modifier.height(24.dp))
@@ -104,10 +157,35 @@ fun VideoDetailScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            VideoActionButton(icon = Icons.Default.PlayArrow, label = "Watch")
-                            VideoActionButton(icon = Icons.Default.Headset, label = "Listen")
-                            VideoActionButton(icon = Icons.Default.FavoriteBorder, label = "Favorite")
-                            VideoActionButton(icon = Icons.Default.Share, label = "Share")
+                            VideoActionButton(
+                                icon = Icons.Default.PlayArrow, 
+                                label = "Watch",
+                                onClick = { Toast.makeText(context, "Playing Video", Toast.LENGTH_SHORT).show() }
+                            )
+                            VideoActionButton(
+                                icon = Icons.Default.Headset, 
+                                label = "Listen",
+                                onClick = { Toast.makeText(context, "Audio Mode Activated", Toast.LENGTH_SHORT).show() }
+                            )
+                            VideoActionButton(
+                                icon = if (state.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                label = "Favorite",
+                                iconColor = if (state.isFavorite) Color.Red else Color.White,
+                                onClick = { viewModel?.toggleFavorite() }
+                            )
+                            VideoActionButton(
+                                icon = Icons.Default.Share, 
+                                label = "Share",
+                                onClick = {
+                                    val sendIntent: Intent = Intent().apply {
+                                        action = Intent.ACTION_SEND
+                                        putExtra(Intent.EXTRA_TEXT, "Watch ${video.title} on Divine Ministries TV: https://www.youtube.com/watch?v=$videoId")
+                                        type = "text/plain"
+                                    }
+                                    val shareIntent = Intent.createChooser(sendIntent, null)
+                                    context.startActivity(shareIntent)
+                                }
+                            )
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
@@ -143,32 +221,53 @@ fun VideoDetailScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Tab Content
-                        when (selectedTab) {
-                            0 -> {
-                                Text(
-                                    text = video.description,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White.copy(alpha = 0.8f),
-                                    lineHeight = 22.sp
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = "Key Topics:",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    TopicChip("Faith")
-                                    TopicChip("Prophecy")
-                                    TopicChip("Promises")
+                        // Tab Content - Using a box to fill remaining space
+                        Box(modifier = Modifier.weight(1f)) {
+                            when (selectedTab) {
+                                0 -> {
+                                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                                        Text(
+                                            text = video.description,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White.copy(alpha = 0.8f),
+                                            lineHeight = 22.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text(
+                                            text = "Key Topics:",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            TopicChip("Faith")
+                                            TopicChip("Prophecy")
+                                            TopicChip("Promises")
+                                        }
+                                        Spacer(modifier = Modifier.height(24.dp))
+                                    }
                                 }
-                            }
-                            else -> {
-                                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                                    Text(text = "${tabs[selectedTab]} content coming soon", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                3 -> {
+                                    if (state.comments.isEmpty()) {
+                                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                            Text(text = "No comments found", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                    } else {
+                                        LazyColumn(
+                                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                                            contentPadding = PaddingValues(bottom = 24.dp)
+                                        ) {
+                                            items(state.comments) { comment ->
+                                                CommentItem(comment = comment)
+                                            }
+                                        }
+                                    }
+                                }
+                                else -> {
+                                    Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                                        Text(text = "${tabs[selectedTab]} content coming soon", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
                                 }
                             }
                         }
@@ -180,16 +279,75 @@ fun VideoDetailScreen(
 }
 
 @Composable
-fun VideoActionButton(icon: ImageVector, label: String) {
+fun CommentItem(comment: Comment) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        AsyncImage(
+            model = comment.authorImageUrl,
+            contentDescription = null,
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = comment.authorName,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = comment.publishedAt.take(10),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = comment.text,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.9f),
+                lineHeight = 18.sp
+            )
+            Row(
+                modifier = Modifier.padding(top = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ThumbUp, 
+                    contentDescription = null, 
+                    tint = MaterialTheme.colorScheme.secondary, 
+                    modifier = Modifier.size(12.dp)
+                )
+                Text(
+                    text = " ${comment.likeCount}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun VideoActionButton(
+    icon: ImageVector, 
+    label: String, 
+    iconColor: Color = Color.White,
+    onClick: () -> Unit = {}
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         IconButton(
-            onClick = { },
+            onClick = onClick,
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
-            Icon(icon, contentDescription = label, tint = Color.White, modifier = Modifier.size(20.dp))
+            Icon(icon, contentDescription = label, tint = iconColor, modifier = Modifier.size(20.dp))
         }
         Text(text = label, style = MaterialTheme.typography.labelSmall, color = Color.White, modifier = Modifier.padding(top = 4.dp))
     }
@@ -198,7 +356,7 @@ fun VideoActionButton(icon: ImageVector, label: String) {
 @Composable
 fun TopicChip(text: String) {
     Surface(
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
         shape = CircleShape,
         border = null
     ) {
@@ -206,7 +364,8 @@ fun TopicChip(text: String) {
             text = text,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.secondary,
+            fontWeight = FontWeight.Bold
         )
     }
 }

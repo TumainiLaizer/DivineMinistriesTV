@@ -1,5 +1,6 @@
 package com.gospel.divineministriestv.ui.screens.info
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -26,6 +28,7 @@ import com.gospel.divineministriestv.ui.theme.DivineMinistriesTVTheme
 @Composable
 fun MinistryInfoScreen(onBack: () -> Unit = {}) {
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
     val infoItems = listOf(
         "Our Mission", "House of Prayers", "Prophetic Intercessors",
         "Global Movement", "Army of Kings & Priests", "End-Time Intercessors", "Our Programs"
@@ -92,7 +95,9 @@ fun MinistryInfoScreen(onBack: () -> Unit = {}) {
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { /* TODO */ },
+                            .clickable { 
+                                Toast.makeText(context, "Details for $item coming soon", Toast.LENGTH_SHORT).show()
+                            },
                         color = Color.Transparent
                     ) {
                         Row(

@@ -38,6 +38,7 @@ fun LibraryScreen(
     viewModel: LibraryViewModel? = null
 ) {
     val uiState by (viewModel?.uiState ?: MutableStateFlow(LibraryUiState.Loading)).collectAsState()
+    val selectedFilter by (viewModel?.selectedFilter ?: MutableStateFlow(LibraryFilter.ALL)).collectAsState()
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -71,22 +72,23 @@ fun LibraryScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                item { 
-                    FilterChip(
-                        selected = true, 
-                        onClick = { }, 
-                        label = { Text("All", fontSize = 12.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = Color.White
-                        ),
-                        border = null,
-                        shape = RoundedCornerShape(20.dp)
-                    ) 
+                LibraryFilter.entries.forEach { filter ->
+                    item {
+                        FilterChip(
+                            selected = selectedFilter == filter,
+                            onClick = { viewModel?.setFilter(filter) },
+                            label = { Text(filter.name.lowercase().replaceFirstChar { it.uppercase() }, fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = Color.White,
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                labelColor = Color.LightGray
+                            ),
+                            border = null,
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                    }
                 }
-                item { FilterChip(selected = false, onClick = { }, label = { Text("Year", fontSize = 12.sp) }) }
-                item { FilterChip(selected = false, onClick = { }, label = { Text("Program", fontSize = 12.sp) }) }
-                item { FilterChip(selected = false, onClick = { }, label = { Text("Topics", fontSize = 12.sp) }) }
             }
 
             when (val state = uiState) {

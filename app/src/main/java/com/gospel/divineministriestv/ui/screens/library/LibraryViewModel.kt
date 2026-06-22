@@ -18,21 +18,51 @@ class LibraryViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<LibraryUiState>(LibraryUiState.Loading)
     val uiState: StateFlow<LibraryUiState> = _uiState
 
+    private val _selectedFilter = MutableStateFlow(LibraryFilter.ALL)
+    val selectedFilter: StateFlow<LibraryFilter> = _selectedFilter
+
+    private var allVideos: List<Video> = emptyList()
+    private var currentPlaylistId: String? = null
+
     init {
         fetchVideos()
     }
 
-    fun fetchVideos() {
+    fun fetchVideos(playlistId: String? = null) {
+        currentPlaylistId = playlistId
         viewModelScope.launch {
             _uiState.value = LibraryUiState.Loading
             try {
-                val videos = repository.getLatestVideos()
-                _uiState.value = LibraryUiState.Success(videos)
+                allVideos = if (playlistId != null) {
+                    repository.getPlaylistVideos(playlistId)
+                } else {
+                    repository.getLatestVideos()
+                }
+                applyFilter(_selectedFilter.value)
             } catch (e: Exception) {
                 _uiState.value = LibraryUiState.Error(e.message ?: "Unknown error")
             }
         }
     }
+
+    fun setFilter(filter: LibraryFilter) {
+        _selectedFilter.value = filter
+        applyFilter(filter)
+    }
+
+    private fun applyFilter(filter: LibraryFilter) {
+        val filteredVideos = when (filter) {
+            LibraryFilter.ALL -> allVideos
+            LibraryFilter.YEAR -> allVideos.sortedByDescending { it.publishedAt }
+            LibraryFilter.PROGRAM -> allVideos.sortedBy { it.title }
+            LibraryFilter.TOPICS -> allVideos.sortedBy { it.description.length } // Placeholder for topics sorting
+        }
+        _uiState.value = LibraryUiState.Success(filteredVideos)
+    }
+}
+
+enum class LibraryFilter {
+    ALL, YEAR, PROGRAM, TOPICS
 }
 
 sealed class LibraryUiState {

@@ -1,7 +1,7 @@
 package com.gospel.divineministriestv.util
 
 object Constants {
-    const val YOUTUBE_CHANNEL_ID = "UC6bM-vRCO9P2YdZ8PzG9r_w" // Correct ID for @divineministriestv
+    const val YOUTUBE_CHANNEL_ID = "UCYFmlt5uQXbScdBWhGPCqRw" // Correct ID for @divineministriestv
     const val WHATSAPP_NUMBER = "255746628890"
     const val MINISTRY_PHONE = "+255 746 628 890"
     const val MINISTRY_EMAIL = "info@divineministriesglobal.com"

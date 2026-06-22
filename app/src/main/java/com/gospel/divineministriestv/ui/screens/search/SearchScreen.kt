@@ -6,8 +6,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -16,18 +19,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.gospel.divineministriestv.ui.screens.library.LibraryVideoItem
 import com.gospel.divineministriestv.ui.theme.DivineMinistriesTVTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     onVideoClick: (String) -> Unit = {},
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    viewModel: SearchViewModel? = null
 ) {
+    val searchQuery by (viewModel?.searchQuery ?: MutableStateFlow("")).collectAsState()
+    val uiState by (viewModel?.uiState ?: MutableStateFlow(SearchUiState.Idle)).collectAsState()
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     val recentSearches = listOf("Prayer and Fasting", "Prophetic Promises", "Spiritual Warfare", "Kingdom Leadership")
     val popularSearches = listOf("Prayer", "Fasting", "Faith", "Healing", "Revival", "Holy Spirit", "Deliverance", "Prophecy")
 
@@ -43,8 +55,8 @@ fun SearchScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
                 )
             )
         }
@@ -54,75 +66,69 @@ fun SearchScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            // Custom Search Bar Area
-            Row(
+            // Search Bar
+            TextField(
+                value = searchQuery,
+                onValueChange = { viewModel?.onSearchQueryChanged(it) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
-                    .height(48.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    "Search sermons, topics, scriptures...",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f)
+                    .clip(CircleShape),
+                placeholder = { Text("Search sermons, topics, scriptures...", fontSize = 14.sp) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { viewModel?.clearSearch() }) {
+                            Icon(Icons.Default.Close, contentDescription = "Clear")
+                        }
+                    }
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = {
+                    viewModel?.performSearch()
+                    keyboardController?.hide()
+                }),
+                singleLine = true,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
                 )
-            }
+            )
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp)
-            ) {
-                item {
-                    Text(
-                        text = "Recent Searches",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+            when (val state = uiState) {
+                is SearchUiState.Idle -> {
+                    DefaultSearchContent(
+                        recentSearches = recentSearches,
+                        popularSearches = popularSearches,
+                        onSearchClick = { viewModel?.performSearch(it) }
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
-
-                items(recentSearches) { search ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { /* Handle search */ }
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.History, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(text = search, style = MaterialTheme.typography.bodyLarge, color = Color.White)
+                is SearchUiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
                     }
                 }
-
-                item {
-                    Spacer(modifier = Modifier.height(32.dp))
-                    Text(
-                        text = "Popular Searches",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Flow-like layout using Row + Column
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            popularSearches.take(4).forEach { search ->
-                                SearchChip(text = search)
-                            }
+                is SearchUiState.Error -> {
+                    Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                        Text(text = state.message, color = MaterialTheme.colorScheme.error)
+                    }
+                }
+                is SearchUiState.Success -> {
+                    if (state.results.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(text = "No results found", color = Color.White)
                         }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            popularSearches.drop(4).forEach { search ->
-                                SearchChip(text = search)
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(state.results) { video ->
+                                LibraryVideoItem(video = video, onVideoClick = onVideoClick)
                             }
                         }
                     }
@@ -133,9 +139,67 @@ fun SearchScreen(
 }
 
 @Composable
-fun SearchChip(text: String) {
+fun DefaultSearchContent(
+    recentSearches: List<String>,
+    popularSearches: List<String>,
+    onSearchClick: (String) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        item {
+            Text(
+                text = "Recent Searches",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        items(recentSearches) { search ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSearchClick(search) }
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.History, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(text = search, style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(32.dp))
+            Text(
+                text = "Popular Searches",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                popularSearches.forEach { search ->
+                    SearchChip(text = search, onClick = { onSearchClick(search) })
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun SearchChip(text: String, onClick: () -> Unit) {
     Surface(
-        onClick = { },
+        onClick = onClick,
         color = MaterialTheme.colorScheme.surfaceVariant,
         shape = CircleShape
     ) {

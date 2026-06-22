@@ -1,5 +1,6 @@
 package com.gospel.divineministriestv.ui.screens.more
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,11 +17,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gospel.divineministriestv.ui.theme.DivineMinistriesTVTheme
+import com.gospel.divineministriestv.util.Constants
+import com.gospel.divineministriestv.util.openBrowser
+import com.gospel.divineministriestv.util.openDialer
+import com.gospel.divineministriestv.util.openEmail
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,6 +35,7 @@ fun MoreScreen(
     onBack: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -59,11 +66,17 @@ fun MoreScreen(
             MoreHubItem(title = "Ministry Information", icon = Icons.Outlined.Info, onClick = { onNavigate("ministry_info") })
             MoreHubItem(title = "Give an Offering", icon = Icons.Outlined.VolunteerActivism, onClick = { onNavigate("giving") })
             MoreHubItem(title = "Prayer & Counseling", icon = Icons.Outlined.Forum, onClick = { onNavigate("prayer") })
-            MoreHubItem(title = "Events", icon = Icons.Outlined.CalendarToday, onClick = { /* TODO */ })
+            MoreHubItem(title = "Events", icon = Icons.Outlined.CalendarToday, onClick = { 
+                Toast.makeText(context, "No upcoming events scheduled", Toast.LENGTH_SHORT).show()
+            })
             MoreHubItem(title = "Social Media", icon = Icons.Outlined.Public, onClick = { onNavigate("social_hub") })
-            MoreHubItem(title = "Contact Us", icon = Icons.Outlined.Phone, onClick = { /* TODO */ })
+            MoreHubItem(title = "Contact Us", icon = Icons.Outlined.Phone, onClick = { 
+                context.openDialer(Constants.MINISTRY_PHONE)
+            })
             MoreHubItem(title = "Settings", icon = Icons.Outlined.Settings, onClick = { onNavigate("settings") })
-            MoreHubItem(title = "Help & Support", icon = Icons.AutoMirrored.Outlined.Help, onClick = { /* TODO */ }, isLast = true)
+            MoreHubItem(title = "Help & Support", icon = Icons.AutoMirrored.Outlined.Help, onClick = { 
+                context.openEmail(Constants.MINISTRY_EMAIL, "App Support - Divine Ministries TV")
+            }, isLast = true)
 
             Spacer(modifier = Modifier.height(48.dp))
             

@@ -14,6 +14,8 @@ data class Video(
     val publishedAt: String,
     val duration: String? = null,
     val viewCount: String? = null,
+    val likeCount: String? = null,
+    val commentCount: String? = null,
     val isLive: Boolean = false,
     val category: String? = null
 )
@@ -24,4 +26,22 @@ data class Playlist(
     val title: String,
     val thumbnailUrl: String,
     val videoCount: Int
+)
+
+@Serializable
+data class ChannelStats(
+    val id: String,
+    val subscriberCount: String,
+    val viewCount: String,
+    val videoCount: String,
+    val bannerUrl: String? = null
+)
+
+@Serializable
+data class Comment(
+    val authorName: String,
+    val authorImageUrl: String,
+    val text: String,
+    val likeCount: Int,
+    val publishedAt: String
 )

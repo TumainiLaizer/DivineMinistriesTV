@@ -12,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.font.FontWeight
@@ -104,6 +103,7 @@ fun OfferingScreen(
                 title = "Zelle",
                 details = Constants.ZELLE_NUMBER,
                 logoRes = R.drawable.zelle_logo,
+                logoBackground = Color.White,
                 onClick = { onMethodClick("Zelle") }
             )
 
@@ -114,6 +114,7 @@ fun OfferingScreen(
                 title = "WorldRemit",
                 details = Constants.WORLDREMIT_NUMBER,
                 logoRes = R.drawable.worldremit_logo,
+                logoBackground = Color.White,
                 onClick = { onMethodClick("WorldRemit") }
             )
             
@@ -127,6 +128,7 @@ fun PaymentMethodRowItem(
     title: String,
     details: String,
     logoRes: Int,
+    logoBackground: Color = Color.Transparent,
     onClick: () -> Unit
 ) {
     Card(
@@ -144,13 +146,19 @@ fun PaymentMethodRowItem(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = logoRes,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
-            )
+            Surface(
+                color = logoBackground,
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.size(40.dp)
+            ) {
+                AsyncImage(
+                    model = logoRes,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(if (logoBackground != Color.Transparent) 4.dp else 0.dp)
+                        .fillMaxSize()
+                )
+            }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(

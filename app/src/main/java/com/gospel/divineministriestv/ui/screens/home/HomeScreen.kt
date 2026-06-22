@@ -39,6 +39,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 @Composable
 fun HomeScreen(
     onVideoClick: (String) -> Unit = {},
+    onSeeAllVideos: () -> Unit = {},
+    onSeeAllCategories: () -> Unit = {},
     onSearchClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     viewModel: HomeViewModel? = null
@@ -110,13 +112,13 @@ fun HomeScreen(
                     }
 
                     item {
-                        SectionHeader(title = "Latest Sermons", showSeeAll = true)
+                        SectionHeader(title = "Latest Sermons", showSeeAll = true, onSeeAllClick = onSeeAllVideos)
                         VideoRow(videos = state.latestVideos, onVideoClick = onVideoClick)
                     }
 
                     if (state.playlists.isNotEmpty()) {
                         item {
-                            SectionHeader(title = "Categories", showSeeAll = true)
+                            SectionHeader(title = "Categories", showSeeAll = true, onSeeAllClick = onSeeAllCategories)
                             PlaylistRow(playlists = state.playlists)
                         }
                     }
@@ -278,7 +280,7 @@ fun LiveVideoCard(video: Video, onVideoClick: (String) -> Unit) {
 }
 
 @Composable
-fun SectionHeader(title: String, showSeeAll: Boolean = false) {
+fun SectionHeader(title: String, showSeeAll: Boolean = false, onSeeAllClick: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -297,7 +299,7 @@ fun SectionHeader(title: String, showSeeAll: Boolean = false) {
                 text = "See All",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clickable { }
+                modifier = Modifier.clickable { onSeeAllClick() }
             )
         }
     }

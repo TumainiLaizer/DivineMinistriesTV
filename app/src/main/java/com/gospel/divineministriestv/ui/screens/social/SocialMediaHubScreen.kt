@@ -1,6 +1,5 @@
 package com.gospel.divineministriestv.ui.screens.social
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
@@ -27,6 +26,8 @@ import coil.compose.AsyncImage
 import com.gospel.divineministriestv.R
 import com.gospel.divineministriestv.ui.theme.DivineMinistriesTVTheme
 import com.gospel.divineministriestv.util.Constants
+import com.gospel.divineministriestv.util.openBrowser
+import com.gospel.divineministriestv.util.openWhatsApp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,31 +78,31 @@ fun SocialMediaHubScreen(onBack: () -> Unit = {}) {
                 title = "YouTube",
                 value = "Divine Ministries TV",
                 iconRes = R.drawable.ic_youtube,
-                onClick = { openUrl(context, "https://www.youtube.com/@divineministriestv") }
+                onClick = { context.openBrowser("https://www.youtube.com/@divineministriestv") }
             )
             SocialHubItem(
                 title = "Facebook",
                 value = "facebook.com/lusako.sekela",
                 iconRes = R.drawable.ic_facebook,
-                onClick = { openUrl(context, "https://facebook.com/lusako.sekela") }
+                onClick = { context.openBrowser("https://facebook.com/lusako.sekela") }
             )
             SocialHubItem(
                 title = "Instagram",
                 value = "@divineministriesglobal",
                 iconRes = R.drawable.ic_instagram,
-                onClick = { openUrl(context, "https://instagram.com/divineministriesglobal") }
+                onClick = { context.openBrowser("https://instagram.com/divineministriesglobal") }
             )
             SocialHubItem(
                 title = "WhatsApp",
                 value = "Chat with us",
                 iconRes = R.drawable.ic_whatsapp,
-                onClick = { openUrl(context, "https://wa.me/${Constants.WHATSAPP_NUMBER}") }
+                onClick = { context.openWhatsApp(Constants.WHATSAPP_NUMBER) }
             )
             SocialHubItem(
                 title = "Website",
                 value = "divineministriesglobal.com",
                 iconRes = R.drawable.divinelogo,
-                onClick = { openUrl(context, Constants.WEBSITE_URL) }
+                onClick = { context.openBrowser(Constants.WEBSITE_URL) }
             )
         }
     }
@@ -141,11 +142,6 @@ fun SocialHubItem(title: String, value: String, iconRes: Int, onClick: () -> Uni
             )
         }
     }
-}
-
-private fun openUrl(context: Context, url: String) {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-    context.startActivity(intent)
 }
 
 @Preview(name = "Dark Mode", showBackground = true)

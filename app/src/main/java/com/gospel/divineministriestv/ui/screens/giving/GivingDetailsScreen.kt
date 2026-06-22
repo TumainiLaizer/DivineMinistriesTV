@@ -12,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +48,8 @@ fun GivingDetailsScreen(
         else -> R.drawable.worldremit_logo
     }
 
+    val needsWhiteBackground = methodType == "Zelle" || methodType == "WorldRemit"
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -76,13 +77,19 @@ fun GivingDetailsScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
             
-            AsyncImage(
-                model = logoRes,
-                contentDescription = methodType,
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(16.dp))
-            )
+            Surface(
+                color = if (needsWhiteBackground) Color.White else Color.Transparent,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.size(100.dp)
+            ) {
+                AsyncImage(
+                    model = logoRes,
+                    contentDescription = methodType,
+                    modifier = Modifier
+                        .padding(if (needsWhiteBackground) 12.dp else 0.dp)
+                        .fillMaxSize()
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 

@@ -8,6 +8,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,6 +34,7 @@ import com.gospel.divineministriestv.ui.screens.more.MoreScreen
 import com.gospel.divineministriestv.ui.screens.onboarding.OnboardingScreen
 import com.gospel.divineministriestv.ui.screens.prayer.PrayerCounselingScreen
 import com.gospel.divineministriestv.ui.screens.profile.ProphetessProfileScreen
+import com.gospel.divineministriestv.ui.screens.profile.ProphetessProfileViewModel
 import com.gospel.divineministriestv.ui.screens.profile.UserProfileScreen
 import com.gospel.divineministriestv.ui.screens.search.SearchScreen
 import com.gospel.divineministriestv.ui.screens.settings.SettingsScreen
@@ -118,6 +120,12 @@ fun MainScreen() {
                     onVideoClick = { videoId ->
                         navController.navigate(Screen.VideoDetail.createRoute(videoId))
                     },
+                    onSeeAllVideos = {
+                        navController.navigate(Screen.Library.route)
+                    },
+                    onSeeAllCategories = {
+                        navController.navigate(Screen.Categories.route)
+                    },
                     onProfileClick = {
                         navController.navigate("prophetess_profile")
                     },
@@ -143,6 +151,20 @@ fun MainScreen() {
                     onBack = { navController.popBackStack() },
                     viewModel = viewModel
                 ) 
+            }
+            composable("library_detail/{playlistId}") { backStackEntry ->
+                val playlistId = backStackEntry.arguments?.getString("playlistId") ?: ""
+                val viewModel: LibraryViewModel = hiltViewModel()
+                LaunchedEffect(playlistId) {
+                    viewModel.fetchVideos(playlistId)
+                }
+                LibraryScreen(
+                    onVideoClick = { videoId ->
+                        navController.navigate(Screen.VideoDetail.createRoute(videoId))
+                    },
+                    onBack = { navController.popBackStack() },
+                    viewModel = viewModel
+                )
             }
             composable(Screen.Prayer.route) { 
                 PrayerCounselingScreen(onBack = { navController.popBackStack() })
@@ -183,7 +205,7 @@ fun MainScreen() {
                 val viewModel: CategoriesViewModel = hiltViewModel()
                 CategoriesScreen(
                     onCategoryClick = { playlistId ->
-                        // TODO: Handle playlist detail navigation or filtering
+                        navController.navigate("library_detail/$playlistId")
                     },
                     onBack = { navController.popBackStack() },
                     viewModel = viewModel
@@ -208,7 +230,11 @@ fun MainScreen() {
                 MinistryInfoScreen(onBack = { navController.popBackStack() }) 
             }
             composable("prophetess_profile") { 
-                ProphetessProfileScreen(onBack = { navController.popBackStack() }) 
+                val viewModel: ProphetessProfileViewModel = hiltViewModel()
+                ProphetessProfileScreen(
+                    onBack = { navController.popBackStack() },
+                    viewModel = viewModel
+                )
             }
             composable("social_hub") { 
                 SocialMediaHubScreen(onBack = { navController.popBackStack() }) 
