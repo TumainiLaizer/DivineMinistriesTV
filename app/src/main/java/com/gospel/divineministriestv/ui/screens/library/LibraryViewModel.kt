@@ -33,10 +33,17 @@ class LibraryViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = LibraryUiState.Loading
             try {
-                allVideos = if (playlistId != null) {
-                    repository.getPlaylistVideos(playlistId)
-                } else {
-                    repository.getLatestVideos()
+                allVideos = when {
+                    playlistId?.startsWith("year_") == true -> {
+                        val year = playlistId.removePrefix("year_")
+                        repository.searchVideos(year) // Search by year text
+                    }
+                    playlistId != null -> {
+                        repository.getPlaylistVideos(playlistId)
+                    }
+                    else -> {
+                        repository.getLatestVideos()
+                    }
                 }
                 applyFilter(_selectedFilter.value)
             } catch (e: Exception) {
@@ -56,7 +63,6 @@ class LibraryViewModel @Inject constructor(
             LibraryFilter.YEAR -> allVideos.sortedByDescending { it.publishedAt }
             LibraryFilter.PROGRAM -> allVideos.sortedBy { it.title }
             LibraryFilter.TOPICS -> allVideos.sortedBy { video ->
-                // Sort by videos that have more hashtags/topics in description
                 video.description.count { it == '#' }
             }.reversed()
         }

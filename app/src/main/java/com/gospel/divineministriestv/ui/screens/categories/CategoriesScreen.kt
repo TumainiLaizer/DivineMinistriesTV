@@ -18,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.gospel.divineministriestv.R
 import com.gospel.divineministriestv.data.model.Playlist
 import com.gospel.divineministriestv.ui.theme.DivineMinistriesTVTheme
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +38,7 @@ fun CategoriesScreen(
     viewModel: CategoriesViewModel? = null
 ) {
     val uiState by (viewModel?.uiState ?: MutableStateFlow(CategoriesUiState.Loading)).collectAsState()
+    val selectedTab by (viewModel?.selectedTab ?: MutableStateFlow(CategoryTab.TOPICS)).collectAsState()
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -62,6 +63,27 @@ fun CategoriesScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            // Tab Row for Topics vs Year
+            TabRow(
+                selectedTabIndex = selectedTab.ordinal,
+                containerColor = MaterialTheme.colorScheme.background,
+                contentColor = MaterialTheme.colorScheme.secondary,
+                divider = {}
+            ) {
+                CategoryTab.entries.forEach { tab ->
+                    Tab(
+                        selected = selectedTab == tab,
+                        onClick = { viewModel?.setTab(tab) },
+                        text = { 
+                            Text(
+                                tab.name.lowercase().replaceFirstChar { it.uppercase() },
+                                fontWeight = if (selectedTab == tab) FontWeight.Bold else FontWeight.Normal
+                            ) 
+                        }
+                    )
+                }
+            }
+
             when (val state = uiState) {
                 is CategoriesUiState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -82,7 +104,11 @@ fun CategoriesScreen(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(state.categories) { playlist ->
-                            CategoryGridItem(playlist = playlist, onClick = { onCategoryClick(playlist.id) })
+                            CategoryGridItem(
+                                playlist = playlist, 
+                                isYear = selectedTab == CategoryTab.YEAR,
+                                onClick = { onCategoryClick(playlist.id) }
+                            )
                         }
                     }
                 }
@@ -92,7 +118,7 @@ fun CategoriesScreen(
 }
 
 @Composable
-fun CategoryGridItem(playlist: Playlist, onClick: () -> Unit) {
+fun CategoryGridItem(playlist: Playlist, isYear: Boolean, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -106,15 +132,32 @@ fun CategoryGridItem(playlist: Playlist, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            AsyncImage(
-                model = playlist.thumbnailUrl,
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
-                contentScale = ContentScale.Crop
-            )
+            if (isYear) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.CalendarToday, 
+                        contentDescription = null, 
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            } else {
+                AsyncImage(
+                    model = playlist.thumbnailUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = playlist.title,
